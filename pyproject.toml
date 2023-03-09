@@ -6,6 +6,9 @@ authors = ["Vladimir Rusakov <24524555+wervlad@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
 
+[tool.poetry.scripts]
+train = "customer_churn_prediction.train:train"
+
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
 lightautoml = "^0.3.7.3"
