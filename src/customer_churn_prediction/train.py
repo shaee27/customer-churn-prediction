@@ -2,9 +2,12 @@ from pathlib import Path
 
 import click
 import pandas as pd
+from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 NUM_COLS = [
     "ClientPeriod",
@@ -12,6 +15,26 @@ NUM_COLS = [
     "TotalSpent",
 ]
 
+CAT_COLS = [
+    "Sex",
+    "IsSeniorCitizen",
+    "HasPartner",
+    "HasChild",
+    "HasPhoneService",
+    "HasMultiplePhoneNumbers",
+    "HasInternetService",
+    "HasOnlineSecurityService",
+    "HasOnlineBackup",
+    "HasDeviceProtection",
+    "HasTechSupportAccess",
+    "HasOnlineTV",
+    "HasMovieSubscription",
+    "HasContractPhone",
+    "IsBillingPaperless",
+    "PaymentMethod",
+]
+
+FEATURE_COLS = NUM_COLS + CAT_COLS
 TARGET_COL = "Churn"
 
 @click.command()
@@ -28,15 +51,29 @@ TARGET_COL = "Churn"
     type=click.FloatRange(0, 1, min_open=True, max_open=True),
 )
 def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> None:
-    dataset = pd.read_csv(dataset_path, usecols=NUM_COLS+[TARGET_COL])
+    dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
     features = dataset.drop(TARGET_COL, axis=1).replace({" ": 0})
     target = dataset[TARGET_COL]
     features_train, features_val, target_train, target_val = train_test_split(
         features, target, test_size=test_split_ratio, random_state=random_state
     )
-    classifier = LogisticRegression(random_state=random_state).fit(
-        features_train, target_train
+
+    numeric_transformer = Pipeline(steps=[
+        ("scaler", StandardScaler())
+    ])
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("num", numeric_transformer, NUM_COLS),
+            ("cat", OneHotEncoder(handle_unknown='ignore'), CAT_COLS)
+        ]
     )
+
+    classifier = Pipeline(steps=[
+        ("preproc", preprocessor),
+        ("model", LogisticRegression(random_state=random_state)),
+    ]).fit(features_train, target_train)
+
     accuracy = roc_auc_score(target_val, classifier.predict(features_val))
     click.echo(f"ROC AUC score: {accuracy}.")
+
