@@ -1,6 +1,8 @@
 from pathlib import Path
 
 import click
+import mlflow
+import mlflow.sklearn
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
@@ -59,21 +61,22 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
         features, target, test_size=test_split_ratio, random_state=random_state
     )
 
-    numeric_transformer = Pipeline(steps=[
-        ("scaler", StandardScaler())
-    ])
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", numeric_transformer, NUM_COLS),
-            ("cat", OneHotEncoder(handle_unknown='ignore'), CAT_COLS)
-        ]
-    )
+    with mlflow.start_run():
+        numeric_transformer = Pipeline(steps=[
+            ("scaler", StandardScaler())
+        ])
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ("num", numeric_transformer, NUM_COLS),
+                ("cat", OneHotEncoder(handle_unknown='ignore'), CAT_COLS)
+            ]
+        )
 
-    classifier = Pipeline(steps=[
-        ("preproc", preprocessor),
-        ("model", LogisticRegression(random_state=random_state)),
-    ]).fit(features_train, target_train)
+        classifier = Pipeline(steps=[
+            ("preproc", preprocessor),
+            ("model", LogisticRegression(random_state=random_state)),
+        ]).fit(features_train, target_train)
 
-    accuracy = roc_auc_score(target_val, classifier.predict(features_val))
-    click.echo(f"ROC AUC score: {accuracy}.")
-
+        roc_auc = roc_auc_score(target_val, classifier.predict(features_val))
+        mlflow.log_metric("roc_auc", roc_auc)
+        click.echo(f"ROC AUC score: {roc_auc}.")
