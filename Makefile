@@ -1,5 +1,8 @@
 SOURCES = $(wildcard *.py) $(wildcard */*.py) $(wildcard */*/*.py)
 
+train:
+	poetry run train
+
 black:
 	poetry run nox -rs black
 
