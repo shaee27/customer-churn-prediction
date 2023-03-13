@@ -2,7 +2,17 @@ from pathlib import Path
 
 import click
 import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split
 
+NUM_COLS = [
+    "ClientPeriod",
+    "MonthlySpending",
+    "TotalSpent",
+]
+
+TARGET_COL = "Churn"
 
 @click.command()
 @click.option(
@@ -11,6 +21,22 @@ import pandas as pd
     default="data/train.csv",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
 )
-def train(dataset_path: Path) -> None:
-    dataset = pd.read_csv(dataset_path)
+@click.option("--random-state", default=42, type=int)
+@click.option(
+    "--test-split-ratio",
+    default=0.2,
+    type=click.FloatRange(0, 1, min_open=True, max_open=True),
+)
+def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> None:
+    dataset = pd.read_csv(dataset_path, usecols=NUM_COLS+[TARGET_COL])
     click.echo(f"Dataset shape: {dataset.shape}.")
+    features = dataset.drop(TARGET_COL, axis=1).replace({" ": 0})
+    target = dataset[TARGET_COL]
+    features_train, features_val, target_train, target_val = train_test_split(
+        features, target, test_size=test_split_ratio, random_state=random_state
+    )
+    classifier = LogisticRegression(random_state=random_state).fit(
+        features_train, target_train
+    )
+    accuracy = roc_auc_score(target_val, classifier.predict(features_val))
+    click.echo(f"ROC AUC score: {accuracy}.")
