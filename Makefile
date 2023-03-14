@@ -17,11 +17,11 @@ mypy:
 tags:
 	ctags -f tags -R --fields=+iaS --extra=+q $(SOURCES)
 
-include_tags:
+include-tags:
 	ctags -f include_tags -R --languages=python --fields=+iaS --extra=+q \
 		.venv/lib/python3.9/
 
-sync_with_git:
+sync-with-git:
 	git fetch
 	git reset origin/main --hard
 
