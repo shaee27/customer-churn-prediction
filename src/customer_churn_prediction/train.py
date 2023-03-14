@@ -62,6 +62,7 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     )
 
     with mlflow.start_run():
+        mlflow.sklearn.autolog()
         numeric_transformer = Pipeline(steps=[
             ("scaler", StandardScaler())
         ])
