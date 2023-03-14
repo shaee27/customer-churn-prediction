@@ -131,9 +131,13 @@ dmypy.json
 # Datasets
 data
 
-#MLflow
+# MLflow
 mlruns
 mlartifacts
 
 # vim buffer files
 .pyproject.toml.swp
+
+# exuberant ctags
+tags
+include_tags
