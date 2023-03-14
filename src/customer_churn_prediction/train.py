@@ -39,6 +39,7 @@ CAT_COLS = [
 FEATURE_COLS = NUM_COLS + CAT_COLS
 TARGET_COL = "Churn"
 
+
 @click.command()
 @click.option(
     "-d",
@@ -63,20 +64,20 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
 
     with mlflow.start_run():
         mlflow.sklearn.autolog()
-        numeric_transformer = Pipeline(steps=[
-            ("scaler", StandardScaler())
-        ])
+        numeric_transformer = Pipeline(steps=[("scaler", StandardScaler())])
         preprocessor = ColumnTransformer(
             transformers=[
                 ("num", numeric_transformer, NUM_COLS),
-                ("cat", OneHotEncoder(handle_unknown='ignore'), CAT_COLS)
+                ("cat", OneHotEncoder(handle_unknown="ignore"), CAT_COLS),
             ]
         )
 
-        classifier = Pipeline(steps=[
-            ("preproc", preprocessor),
-            ("model", LogisticRegression(random_state=random_state)),
-        ]).fit(features_train, target_train)
+        classifier = Pipeline(
+            steps=[
+                ("preproc", preprocessor),
+                ("model", LogisticRegression(random_state=random_state)),
+            ]
+        ).fit(features_train, target_train)
 
         roc_auc = roc_auc_score(target_val, classifier.predict(features_val))
         mlflow.log_metric("roc_auc", roc_auc)
