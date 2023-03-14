@@ -65,6 +65,8 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     features_train, features_val, target_train, target_val = train_test_split(
         features, target, test_size=test_split_ratio, random_state=random_state
     )
+
+    mlflow.set_tracking_uri("http://0.0.0.0:5000/")
     mlflow.sklearn.autolog()
 
     with mlflow.start_run(tags={"mlflow.source.git.commit": VERSION}) as run:
