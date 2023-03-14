@@ -31,5 +31,5 @@ sync-with-git:
 clean:
 	rm -rf tags include_tags __pycache__ */__pycache__ */*/__pycache__
 
-.PHONY: clean include_tags tags tests
+.PHONY: clean include-tags tags tests
 
