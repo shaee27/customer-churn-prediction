@@ -25,16 +25,14 @@ Additional options can be configured via the command-line interface (CLI). To vi
 ```sh
 poetry run train --help
 ```
-6. To view information about the experiments you conducted, run the MLflow UI by executing the following command:
+6. To view information about the experiments you conducted, run the MLflow server by executing **one** of the following commands:
 ```sh
 poetry run mlflow ui
 ```
-Then, in your browser, navigate to http://localhost:5000 to see the experiments results.
-
-If you are using a Unix environment, you can start the server and open the UI in your default browser with a single command:
 ```sh
-make run-mlflow-ui
+make run-mlflow-server
 ```
+Then, in your browser, navigate to http://localhost:5000 to see the experiments results.
 
 ## Development
 
