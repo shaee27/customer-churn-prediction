@@ -12,6 +12,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
+from .data import FeaturePreprocessor
+
 REPO = git.Repo(search_parent_directories=True)
 VERSION = REPO.head.object.hexsha
 
@@ -60,7 +62,7 @@ TARGET_COL = "Churn"
 def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> None:
     dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
-    features = dataset.drop(TARGET_COL, axis=1).replace({" ": 0})
+    features = dataset.drop(TARGET_COL, axis=1)
     target = dataset[TARGET_COL]
     features_train, features_val, target_train, target_val = train_test_split(
         features, target, test_size=test_split_ratio, random_state=random_state
@@ -70,17 +72,18 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     mlflow.sklearn.autolog()
 
     with mlflow.start_run(tags={"mlflow.source.git.commit": VERSION}) as run:
-        numeric_transformer = Pipeline(steps=[("scaler", StandardScaler())])
-        preprocessor = ColumnTransformer(
-            transformers=[
-                ("num", numeric_transformer, NUM_COLS),
-                ("cat", OneHotEncoder(handle_unknown="ignore"), CAT_COLS),
-            ]
-        )
-
         classifier = Pipeline(
             steps=[
-                ("preproc", preprocessor),
+                ("feature_preprocessor", FeaturePreprocessor()),
+                (
+                    "num_cat_preprocessor",
+                    ColumnTransformer(
+                        transformers=[
+                            ("num", StandardScaler(), NUM_COLS),
+                            ("cat", OneHotEncoder(handle_unknown="ignore"), CAT_COLS),
+                        ]
+                    ),
+                ),
                 ("model", LogisticRegression(random_state=random_state)),
             ]
         ).fit(features_train, target_train)
