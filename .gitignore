@@ -133,6 +133,7 @@ data
 
 #MLflow
 mlruns
+mlartifacts
 
 # vim buffer files
 .pyproject.toml.swp
