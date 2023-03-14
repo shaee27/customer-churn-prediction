@@ -8,6 +8,8 @@ run-mlflow-ui:
 	sleep 2
 	xdg-open http://127.0.0.1:5000 &
 
+all-tests: black mypy tests
+
 tests:
 	poetry run nox -rs tests
 
