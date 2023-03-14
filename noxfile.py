@@ -7,7 +7,7 @@ import nox
 from nox.sessions import Session
 
 
-nox.options.sessions = "black", "mypy"
+nox.options.sessions = "black", "mypy", "tests"
 locations = "src", "noxfile.py"
 
 
@@ -43,3 +43,13 @@ def mypy(session: Session) -> None:
     args = session.posargs or locations
     install_with_constraints(session, "mypy")
     session.run("mypy", *args)
+
+
+@nox.session(python="3.9")
+def tests(session: Session) -> None:
+    """Run the test suite."""
+    args = session.posargs
+    session.run("poetry", "run", "pip", "install", "json2html")
+    session.run("poetry", "install", "--no-dev", external=True)
+    install_with_constraints(session, "pytest")
+    session.run("pytest", *args)
