@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import click
+import git
 import mlflow
 import mlflow.sklearn
 import pandas as pd
@@ -10,6 +11,9 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+REPO = git.Repo(search_parent_directories=True)
+VERSION = REPO.head.object.hexsha
 
 NUM_COLS = [
     "ClientPeriod",
@@ -61,9 +65,9 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     features_train, features_val, target_train, target_val = train_test_split(
         features, target, test_size=test_split_ratio, random_state=random_state
     )
+    mlflow.sklearn.autolog()
 
-    with mlflow.start_run():
-        mlflow.sklearn.autolog()
+    with mlflow.start_run(tags={"mlflow.source.git.commit": VERSION}) as run:
         numeric_transformer = Pipeline(steps=[("scaler", StandardScaler())])
         preprocessor = ColumnTransformer(
             transformers=[
