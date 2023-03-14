@@ -4,16 +4,15 @@ import click
 import git
 import mlflow
 import mlflow.sklearn
-import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from .data import FeaturePreprocessor
+from .model import LogisticRegression
 
 REPO = git.Repo(search_parent_directories=True)
 VERSION = REPO.head.object.hexsha
@@ -73,6 +72,7 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     mlflow.sklearn.autolog()
 
     with mlflow.start_run(tags={"mlflow.source.git.commit": VERSION}) as run:
+        model = LogisticRegression(random_state=random_state)
         classifier = Pipeline(
             steps=[
                 ("feature_preprocessor", FeaturePreprocessor()),
@@ -85,20 +85,13 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
                         ]
                     ),
                 ),
-                ("model", LogisticRegression(random_state=random_state)),
+                ("model", model.estimator),
             ]
         )
 
-        params = {
-            "model__C": np.arange(0.001, 100, 0.001),
-            "model__penalty": ["l1"],
-            "model__solver": ["saga"],
-            "model__max_iter": [1000],
-        }
-
         grid_search = GridSearchCV(
             estimator=classifier,
-            param_grid=params,
+            param_grid=model.params_grid,
             scoring="roc_auc",
             n_jobs=-1,
             cv=10,
