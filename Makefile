@@ -8,6 +8,9 @@ run-mlflow-ui:
 	sleep 2
 	xdg-open http://127.0.0.1:5000 &
 
+tests:
+	poetry run nox -rs tests
+
 black:
 	poetry run nox -rs black
 
@@ -28,5 +31,5 @@ sync-with-git:
 clean:
 	rm -rf tags include_tags __pycache__ */__pycache__ */*/__pycache__
 
-.PHONY: clean include_tags tags
+.PHONY: clean include_tags tags tests
 
