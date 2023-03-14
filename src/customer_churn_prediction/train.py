@@ -4,11 +4,12 @@ import click
 import git
 import mlflow
 import mlflow.sklearn
+import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
@@ -86,8 +87,25 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
                 ),
                 ("model", LogisticRegression(random_state=random_state)),
             ]
-        ).fit(features_train, target_train)
+        )
 
-        roc_auc = roc_auc_score(target_val, classifier.predict(features_val))
+        params = {
+            "model__C": np.arange(0.001, 100, 0.001),
+            "model__penalty": ["l1"],
+            "model__solver": ["saga"],
+            "model__max_iter": [1000],
+        }
+
+        grid_search = GridSearchCV(
+            estimator=classifier,
+            param_grid=params,
+            scoring="roc_auc",
+            n_jobs=-1,
+            cv=10,
+            refit=True,
+        )
+        logreg = grid_search.fit(features_train, target_train)
+
+        roc_auc = roc_auc_score(target_val, logreg.predict(features_val))
         mlflow.log_metric("roc_auc", roc_auc)
         click.echo(f"ROC AUC score: {roc_auc}.")
