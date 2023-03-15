@@ -251,8 +251,8 @@ class RandomForestMLflow(MLflowModel):
             dict: A dictionary of hyperparameters and their values.
         """
         params = {
-            "min_samples_split": range(2, 200),
-            "min_samples_leaf": range(1, 200),
+            "min_samples_split": range(2, 200, 20),
+            "min_samples_leaf": range(1, 200, 20),
             "n_estimators": [200],
         }
         return {"model__" + key: val for key, val in params.items()}

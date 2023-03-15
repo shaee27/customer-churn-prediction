@@ -8,7 +8,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from .data import FeaturePreprocessor
-from .model import LogisticRegressionMLflow
+from .model import MLflowModel, LogisticRegressionMLflow, RandomForestMLflow
 
 NUM_COLS = [
     "ClientPeriod",
@@ -52,8 +52,14 @@ TARGET_COL = "Churn"
     default=0.2,
     type=click.FloatRange(0, 1, min_open=True, max_open=True),
 )
+@click.option(
+    "--model",
+    default="logreg",
+    show_default=True,
+    type=click.Choice(["logreg", "rf"]),
+)
 def train(
-    dataset_path: Path, random_state: int, test_split_ratio: float
+    dataset_path: Path, random_state: int, test_split_ratio: float, model: str
 ) -> None:
     dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
@@ -77,9 +83,17 @@ def train(
             ),
         ]
     )
-    model = LogisticRegressionMLflow(
-        pipeline=pipeline, random_state=random_state
-    )
-    model.train_with_logging(features_train, target_train)
-    roc_auc = model.evaluate(features_val, target_val)
+    classifier: MLflowModel
+    if model == "logreg":
+        click.echo(f"Training LogisticRegression")
+        classifier = LogisticRegressionMLflow(
+            pipeline=pipeline, random_state=random_state
+        )
+    elif model == "rf":
+        click.echo(f"Training RandomForest")
+        classifier = RandomForestMLflow(
+            pipeline=pipeline, random_state=random_state
+        )
+    classifier.train_with_logging(features_train, target_train)
+    roc_auc = classifier.evaluate(features_val, target_val)
     click.echo(f"ROC AUC score: {roc_auc}.")
