@@ -141,3 +141,6 @@ mlartifacts
 # exuberant ctags
 tags
 include_tags
+
+# CatBoost output data
+catboost_info
