@@ -8,7 +8,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from .data import FeaturePreprocessor
-from .model import MLflowModel, LogisticRegressionMLflow, RandomForestMLflow
+import customer_churn_prediction.model as mlflow_model
 
 NUM_COLS = [
     "ClientPeriod",
@@ -56,7 +56,7 @@ TARGET_COL = "Churn"
     "--model",
     default="logreg",
     show_default=True,
-    type=click.Choice(["logreg", "rf"]),
+    type=click.Choice(["logreg", "rf", "catboost"]),
 )
 def train(
     dataset_path: Path, random_state: int, test_split_ratio: float, model: str
@@ -83,16 +83,21 @@ def train(
             ),
         ]
     )
-    classifier: MLflowModel
+    classifier: mlflow_model.MLflowModel
     if model == "logreg":
         click.echo(f"Training LogisticRegression")
-        classifier = LogisticRegressionMLflow(
+        classifier = mlflow_model.LogisticRegressionMLflow(
             pipeline=pipeline, random_state=random_state
         )
     elif model == "rf":
         click.echo(f"Training RandomForest")
-        classifier = RandomForestMLflow(
+        classifier = mlflow_model.RandomForestMLflow(
             pipeline=pipeline, random_state=random_state
+        )
+    elif model == "catboost":
+        click.echo(f"Training CatBoost")
+        classifier = mlflow_model.CatBoostMLflow(
+            pipeline=pipeline, random_state=random_state, cat_features=CAT_COLS
         )
     classifier.train_with_logging(features_train, target_train)
     roc_auc = classifier.evaluate(features_val, target_val)

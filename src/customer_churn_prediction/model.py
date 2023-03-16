@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from catboost import CatBoostClassifier
 import git
 import numpy as np
 import mlflow
@@ -45,8 +46,10 @@ class MLflowModel(ABC):
         mlflow_tracking_uri="http://0.0.0.0:5000/",
         mlflow_experiment_name=None,
         pipeline=None,
+        cat_features=None,
         random_state=0,
     ) -> None:
+        self.cat_features = cat_features
         self.random_state = random_state
         self.mlflow_tracking_uri = mlflow_tracking_uri
         self.mlflow_experiment_name = mlflow_experiment_name
@@ -174,5 +177,31 @@ class RandomForestMLflow(MLflowModel):
             "min_samples_split": range(2, 200, 20),
             "min_samples_leaf": range(1, 200, 20),
             "n_estimators": [200],
+        }
+        return {"model__" + key: val for key, val in params.items()}
+
+
+class CatBoostMLflow(MLflowModel):
+    @property
+    def estimator(self):
+        return CatBoostClassifier(
+            cat_features=self.cat_features,
+            logging_level="Silent",
+            eval_metric="AUC:hints=skip_train~false",
+            grow_policy="Lossguide",
+            metric_period=1000,
+            random_seed=0,
+        )
+
+    @property
+    def param_grid(self) -> dict:
+        params = {
+            "n_estimators": [250],  # [5, 10, 20, 30, 40, 50, 70, 100, 150, 200, 250, 300, 500, 1000],
+            "learning_rate": [0.05],  # [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.02, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5],
+            "max_depth": [4],  # np.arange(4, 20, 1),
+            "l2_leaf_reg": [10],  # np.arange(0.1, 1, 0.05),
+            "subsample": [0.6],  # [3, 5, 7, 10],
+            "random_strength": [5],  # [1, 2, 5, 10, 20, 50, 100],
+            "min_data_in_leaf": [100],  # np.arange(10, 1001, 10),
         }
         return {"model__" + key: val for key, val in params.items()}
