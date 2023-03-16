@@ -37,5 +37,15 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 filterwarnings = [
+    "ignore::UserWarning",
     "ignore::DeprecationWarning",
 ]
+
+[[tool.mypy.overrides]]
+module = [
+    "pandas",
+    "sklearn.*",
+    "catboost",
+    "mlflow",
+]
+ignore_missing_imports = true
