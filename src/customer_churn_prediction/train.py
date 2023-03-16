@@ -51,6 +51,21 @@ TARGET_COL = "Churn"
     "--test-split-ratio",
     default=0.2,
     type=click.FloatRange(0, 1, min_open=True, max_open=True),
+    help="The proportion of the dataset to include in the test split.",
+)
+@click.option(
+    "--scale/--no-scale",
+    default=True,
+    show_default=True,
+    type=bool,
+    help="Use standard scaler.",
+)
+@click.option(
+    "--ohe/--no-ohe",
+    default=True,
+    show_default=True,
+    type=bool,
+    help="Use one-hot encoding.",
 )
 @click.option(
     "--model",
@@ -59,7 +74,12 @@ TARGET_COL = "Churn"
     type=click.Choice(["logreg", "rf", "catboost"]),
 )
 def train(
-    dataset_path: Path, random_state: int, test_split_ratio: float, model: str
+    dataset_path: Path,
+    random_state: int,
+    test_split_ratio: float,
+    scale: bool,
+    ohe: bool,
+    model: str,
 ) -> None:
     dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
@@ -69,20 +89,20 @@ def train(
         features, target, test_size=test_split_ratio, random_state=random_state
     )
 
-    pipeline = Pipeline(
-        steps=[
-            ("feature_preprocessor", FeaturePreprocessor()),
-            (
-                "num_cat_preprocessor",
-                ColumnTransformer(
-                    transformers=[
-                        ("num", StandardScaler(), NUM_COLS),
-                        ("cat", OneHotEncoder(), CAT_COLS),
-                    ]
-                ),
-            ),
-        ]
-    )
+    pipeline = Pipeline([("feature_preprocessor", FeaturePreprocessor())])
+    if scale or ohe:
+        ct = ColumnTransformer([])
+        if scale:
+            ct.transformers.append(("num", StandardScaler(), NUM_COLS))
+        if ohe:
+            if model == "catboost":
+                raise ValueError(
+                    "Do not use one-hot encoding with CatBoost. This affects "
+                    "both the training speed and the resulting quality."
+                )
+            ct.transformers.append(("cat", OneHotEncoder(), CAT_COLS))
+        pipeline.steps.append(("num_cat_preprocessor", ct))
+
     classifier: mlflow_model.MLflowModel
     if model == "logreg":
         click.echo(f"Training LogisticRegression")
