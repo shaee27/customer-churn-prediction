@@ -25,6 +25,19 @@ class MLflowModel(ABC):
             initialization.
         random_state: Optional[Union[int, RandomState]]
             An optional random state to use for reproducible results.
+
+    Properties:
+        estimator:
+            The estimator used for training and prediction.
+        param_grid: dict
+            A dictionary specifying the hyperparameter grid for hyperparameter
+            tuning.
+
+    Methods:
+        train_with_logging(X, y, run_name=None):
+            Train a model with MLflow autologging enabled.
+        evaluate(X_val, y_val):
+            Evaluate the trained logistic regression model on a validation set.
     """
 
     def __init__(
@@ -33,7 +46,7 @@ class MLflowModel(ABC):
         mlflow_experiment_name=None,
         pipeline=None,
         random_state=0,
-    ):
+    ) -> None:
         self.random_state = random_state
         self.mlflow_tracking_uri = mlflow_tracking_uri
         self.mlflow_experiment_name = mlflow_experiment_name
@@ -56,13 +69,17 @@ class MLflowModel(ABC):
         """
         pass
 
-    def train_with_logging(self, X, y, run_name=None):
+    def train_with_logging(self, X, y, run_name=None) -> "MLflowModel":
         """
         Trains the model on the given data with logging enabled.
 
         Parameters:
-        - X: Input data for training
-        - y: Target variable for training
+            X: numpy.ndarray or pandas.DataFrame
+               Training data set features.
+            y: numpy.ndarray or pandas.Series
+               Training data set target variable.
+            run_name: str
+               Name of MLflow run
         """
         mlflow.set_tracking_uri(self.mlflow_tracking_uri)
         mlflow.sklearn.autolog()
@@ -93,13 +110,11 @@ class MLflowModel(ABC):
 
     @property
     @abstractmethod
-    def param_grid(self):
+    def param_grid(self) -> dict:
         """
-        A dictionary of hyperparameters and their values for hyperparameter
-        tuning.
-
         Returns:
-            dict: A dictionary of hyperparameters and their values.
+            dict: A dictionary of hyperparameters and their values
+            for hyperparameter tuning.
         """
         pass
 
@@ -132,64 +147,12 @@ class MLflowModel(ABC):
 
 
 class LogisticRegressionMLflow(MLflowModel):
-    """
-    A class for training and evaluating a logistic regression model with
-    MLflow autologging.
-
-    Attributes:
-        mlflow_tracking_uri: str
-            The URI of the MLflow server to use for logging.
-        mlflow_experiment_name: str
-            The name of the MLflow experiment to log to.
-        pipeline: Optional[Union[Pipeline, Callable[..., Pipeline]]]
-            An optional pipeline for feature preprocessing.
-            If provided, the model will be added to this pipeline during
-            initialization.
-        random_state: Optional[Union[int, RandomState]]
-            An optional random state to use for reproducible results.
-
-    Properties:
-        estimator:
-            The logistic regression estimator used for training and prediction.
-        param_grid:
-            A dictionary specifying the hyperparameter grid for hyperparameter
-            tuning.
-
-    Methods:
-        train_with_logging(X, y, run_name=None):
-            Train a logistic regression model with MLflow autologging enabled.
-        evaluate(X_val, y_val):
-            Evaluate the trained logistic regression model on a validation set.
-
-    Examples:
-        >>> from sklearn.datasets import load_iris
-        >>> X, y = load_iris(return_X_y=True)
-        >>> model = LogisticRegressionMLflow(random_state=42)
-        >>> model.train_with_logging(X, y)
-        >>> model.evaluate(X, y)
-    """
-
     @property
     def estimator(self):
-        """
-        The logistic regression estimator used for training and prediction.
-
-        Returns:
-            An instance of sklearn.linear_model.LogisticRegression.
-        """
         return LogisticRegression(random_state=self.random_state)
 
     @property
-    def param_grid(self):
-        """
-        A dictionary specifying the hyperparameter grid for hyperparameter
-        tuning.
-
-        Returns:
-            A dictionary with keys corresponding to the hyperparameters to
-            tune, and values corresponding to the ranges of values to try for
-            each hyperparameter.
-        """
+    def param_grid(self) -> dict:
         params = {
             "penalty": ["l1", "l2"],
             "C": np.linspace(0.1, 2, 20),
@@ -201,55 +164,12 @@ class LogisticRegressionMLflow(MLflowModel):
 
 
 class RandomForestMLflow(MLflowModel):
-    """
-    A class representing a random forest model trained with MLflow autologging
-    enabled.
-
-    Attributes:
-        mlflow_tracking_uri: str
-            The URI of the MLflow server to use for logging.
-        mlflow_experiment_name: str
-            The name of the MLflow experiment to log to.
-        pipeline: Optional[Union[Pipeline, Callable[..., Pipeline]]]
-            An optional pipeline for feature preprocessing.
-            If provided, the model will be added to this pipeline during
-            initialization.
-        random_state: Optional[Union[int, RandomState]]
-            An optional random state to use for reproducible results.
-
-    Properties:
-        estimator: sklearn.ensemble.RandomForestClassifier
-            The random forest estimator used for training and prediction.
-        param_grid: dict
-            The parameter grid for hyperparameters tuning.
-
-
-    Methods:
-        train_with_logging(X, y, run_name=None):
-            Train a random forest model with MLflow autologging enabled.
-        evaluate(X_val, y_val):
-            Evaluate the trained logistic regression model on a validation set.
-
-    Example:
-    --------
-    >>> rf_model = RandomForestMLflow(random_state=42)
-    >>> rf_model.train_with_logging(X_train, y_train)
-    >>> rf_model.evaluate(X_test, y_test)
-    """
-
     @property
     def estimator(self):
         return RandomForestClassifier(random_state=self.random_state)
 
     @property
-    def param_grid(self):
-        """
-        A dictionary of hyperparameters and their values for hyperparameter
-        tuning.
-
-        Returns:
-            dict: A dictionary of hyperparameters and their values.
-        """
+    def param_grid(self) -> dict:
         params = {
             "min_samples_split": range(2, 200, 20),
             "min_samples_leaf": range(1, 200, 20),
