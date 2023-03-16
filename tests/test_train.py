@@ -18,3 +18,10 @@ def test_error_for_invalid_test_split_ratio(
     assert result.exit_code == 2
     assert "Invalid value for '--test-split-ratio'" in result.output
 
+def test_error_training_catboost_with_ohe(
+    runner: CliRunner
+) -> None:
+    """It fails when model is catboost and one-hot encoding is enabled."""
+    result = runner.invoke(train, ["--ohe", "--model", "catboost"])
+    assert result.exit_code == 1
+    assert "Do not use one-hot encoding with CatBoost" in str(result.exception)
