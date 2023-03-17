@@ -71,7 +71,7 @@ TARGET_COL = "Churn"
     "--model",
     default="logreg",
     show_default=True,
-    type=click.Choice(["logreg", "rf", "catboost"]),
+    type=click.Choice(["logreg", "rf", "knn", "catboost"]),
 )
 def train(
     dataset_path: Path,
@@ -114,6 +114,9 @@ def train(
         classifier = mlflow_model.RandomForestMLflow(
             pipeline=pipeline, random_state=random_state
         )
+    elif model == "knn":
+        click.echo(f"Training KNearestNeighbour")
+        classifier = mlflow_model.KnnMLflow(pipeline=pipeline)
     elif model == "catboost":
         click.echo(f"Training CatBoost")
         classifier = mlflow_model.CatBoostMLflow(

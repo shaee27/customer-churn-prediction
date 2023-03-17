@@ -8,6 +8,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 
 
@@ -177,6 +178,22 @@ class RandomForestMLflow(MLflowModel):
             "min_samples_split": range(2, 200, 20),
             "min_samples_leaf": range(1, 200, 20),
             "n_estimators": [200],
+        }
+        return {"model__" + key: val for key, val in params.items()}
+
+
+class KnnMLflow(MLflowModel):
+    @property
+    def estimator(self):
+        return KNeighborsClassifier()
+
+    @property
+    def param_grid(self) -> dict:
+        params = {
+            "n_neighbors": [44],  # range(1, 100),
+            "metric": [
+                "manhattan"
+            ],  # ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan", "nan_euclidean"],
         }
         return {"model__" + key: val for key, val in params.items()}
 
