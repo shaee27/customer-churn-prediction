@@ -71,7 +71,7 @@ TARGET_COL = "Churn"
     "--model",
     default="logreg",
     show_default=True,
-    type=click.Choice(["logreg", "rf", "knn", "catboost"]),
+    type=click.Choice(["logreg", "rf", "knn", "catboost", "lgbm"]),
 )
 def train(
     dataset_path: Path,
@@ -122,6 +122,12 @@ def train(
         classifier = mlflow_model.CatBoostMLflow(
             pipeline=pipeline, random_state=random_state, cat_features=CAT_COLS
         )
+    elif model == "lgbm":
+        click.echo(f"Training Light Gradient Boosted Machine")
+        classifier = mlflow_model.LgbmMLflow(
+            pipeline=pipeline, random_state=random_state
+        )
+
     classifier.train_with_logging(features_train, target_train)
     roc_auc = classifier.evaluate(features_val, target_val)
     click.echo(f"ROC AUC score: {roc_auc}.")

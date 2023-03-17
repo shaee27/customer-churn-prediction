@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from catboost import CatBoostClassifier
 import git
 import numpy as np
+import lightgbm as lgb
 import mlflow
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import NotFittedError
@@ -224,5 +225,28 @@ class CatBoostMLflow(MLflowModel):
             "subsample": [0.6],  # [3, 5, 7, 10],
             "random_strength": [5],  # [1, 2, 5, 10, 20, 50, 100],
             "min_data_in_leaf": [100],  # np.arange(10, 1001, 10),
+        }
+        return {"model__" + key: val for key, val in params.items()}
+
+
+class LgbmMLflow(MLflowModel):
+    @property
+    def estimator(self):
+        return lgb.LGBMClassifier(
+            verbose=-1,
+            boosting_type='gbdt',
+            objective='binary',
+            learning_rate=0.01,
+            metric='auc',
+            random_state=self.random_state,
+        )
+
+    @property
+    def param_grid(self) -> dict:
+        params = {
+            "num_leaves": [5, 7, 9, 10],
+            "max_depth": [4],
+            "min_child_samples": range(200, 215),
+            "reg_lambda": [0, 0.1, 0.2, 0.5, 0.7, 1, 1.2, 1.5, 2],
         }
         return {"model__" + key: val for key, val in params.items()}
