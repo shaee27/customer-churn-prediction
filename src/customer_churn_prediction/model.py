@@ -234,10 +234,10 @@ class LgbmMLflow(MLflowModel):
     def estimator(self):
         return lgb.LGBMClassifier(
             verbose=-1,
-            boosting_type='gbdt',
-            objective='binary',
+            boosting_type="gbdt",
+            objective="binary",
             learning_rate=0.01,
-            metric='auc',
+            metric="auc",
             random_state=self.random_state,
         )
 
