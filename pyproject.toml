@@ -47,5 +47,6 @@ module = [
     "sklearn.*",
     "catboost",
     "mlflow",
+    "lightgbm",
 ]
 ignore_missing_imports = true
