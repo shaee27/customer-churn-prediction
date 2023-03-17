@@ -208,7 +208,7 @@ class CatBoostMLflow(MLflowModel):
             eval_metric="AUC:hints=skip_train~false",
             grow_policy="Lossguide",
             metric_period=1000,
-            random_seed=0,
+            random_seed=self.random_state,
         )
 
     @property
