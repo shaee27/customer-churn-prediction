@@ -7,6 +7,7 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.scripts]
+predict = "customer_churn_prediction.predict:predict"
 train = "customer_churn_prediction.train:train"
 
 [tool.poetry.dependencies]
@@ -45,11 +46,11 @@ filterwarnings = [
 
 [[tool.mypy.overrides]]
 module = [
-    "pandas",
-    "sklearn.*",
     "catboost",
-    "mlflow",
     "lightgbm",
+    "mlflow.*",
+    "pandas",
     "pytorch_tabnet.*",
+    "sklearn.*",
 ]
 ignore_missing_imports = true
