@@ -15,15 +15,17 @@ import pandas as pd
     help="Path to test dataset",
 )
 @click.option(
+    "-n",
     "--model-name",
     type=str,
     help="Model name in MLflow registry.",
 )
 @click.option(
+    "-v",
     "--model-version",
-    default="1",
+    default=1,
     show_default=True,
-    type=str,
+    type=int,
     help="Model version in MLflow registry.",
 )
 def predict(
@@ -36,4 +38,4 @@ def predict(
     X_test = pd.read_csv(dataset_path)
     submission = pd.read_csv("data/submission.csv")
     submission["Churn"] = model.predict_proba(X_test)[:, 1]
-    submission.to_csv("my submission.csv", index=False)
+    submission.to_csv("my_submission.csv", index=False)
