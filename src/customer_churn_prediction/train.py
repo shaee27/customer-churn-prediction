@@ -90,9 +90,17 @@ def train(
     click.echo(f"Dataset shape: {dataset.shape}.")
     features = dataset.drop(TARGET_COL, axis=1)
     target = dataset[TARGET_COL]
-    if test_split_ratio > 0: 
-        features_train, features_val, target_train, target_val = train_test_split(
-            features, target, test_size=test_split_ratio, random_state=random_state
+    if test_split_ratio > 0:
+        (
+            features_train,
+            features_val,
+            target_train,
+            target_val,
+        ) = train_test_split(
+            features,
+            target,
+            test_size=test_split_ratio,
+            random_state=random_state,
         )
     else:
         features_train = features

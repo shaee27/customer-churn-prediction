@@ -266,7 +266,18 @@ class TabNetMLflow(MLflowModel):
     def param_grid(self) -> dict:
         params = {
             "gamma": [0.9, 0.92, 0.95, 0.97, 0.98],
-            "lambda_sparse": [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01],
+            "lambda_sparse": [
+                0.001,
+                0.002,
+                0.003,
+                0.004,
+                0.005,
+                0.006,
+                0.007,
+                0.008,
+                0.009,
+                0.01,
+            ],
             "momentum": np.arange(0.1, 1, 0.1),
             "n_independent": [0, 1],
             "n_shared": [7, 9],
