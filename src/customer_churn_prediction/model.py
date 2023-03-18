@@ -4,7 +4,7 @@ import git
 import numpy as np
 import lightgbm as lgb
 import mlflow
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, StackingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
@@ -52,9 +52,9 @@ class MLflowModel(ABC):
         cat_features=None,
         random_state=0,
     ) -> None:
+        mlflow.set_tracking_uri(mlflow_tracking_uri)
         self.cat_features = cat_features
         self.random_state = random_state
-        self.mlflow_tracking_uri = mlflow_tracking_uri
         self.mlflow_experiment_name = mlflow_experiment_name
         self.pipeline = pipeline if pipeline else Pipeline([])
         self.pipeline.steps.append(("model", self.estimator))
@@ -87,7 +87,6 @@ class MLflowModel(ABC):
             run_name: str
                Name of MLflow run
         """
-        mlflow.set_tracking_uri(self.mlflow_tracking_uri)
         mlflow.sklearn.autolog()
 
         repo = git.Repo(search_parent_directories=True)
@@ -284,3 +283,55 @@ class TabNetMLflow(MLflowModel):
             "n_steps": [4, 5],
         }
         return {"model__" + key: val for key, val in params.items()}
+
+
+class StackingMLflow(MLflowModel):
+    ESTIMATORS = ["LogReg", "KNN", "RandomForest", "CatBoost"]
+    META_MODEL = CatBoostClassifier(
+        logging_level="Silent",
+        eval_metric="AUC:hints=skip_train~false",
+        metric_period=1000,
+        random_seed=0,
+        grow_policy="Depthwise",
+        l2_leaf_reg=1,
+        learning_rate=0.08,
+        max_depth=10,
+        min_data_in_leaf=10,
+        n_estimators=10,
+        random_strength=11,
+        subsample=0.1,
+    )
+
+    @property
+    def estimator(self):
+        return StackingClassifier(
+            estimators=[
+                (estim, mlflow.sklearn.load_model(f"models:/{estim}/Staging"))
+                for estim in self.ESTIMATORS
+            ],
+            final_estimator=self.META_MODEL,
+            n_jobs=-1,
+        )
+
+    def train_with_logging(self, X, y, run_name=None) -> "MLflowModel":
+        mlflow.sklearn.autolog()
+
+        repo = git.Repo(search_parent_directories=True)
+        version = repo.head.object.hexsha
+
+        with mlflow.start_run(
+            experiment_id=self.experiment_id,
+            run_id=self.last_run_id,
+            run_name=run_name,
+            tags={"mlflow.source.git.commit": version},
+        ) as run:
+            self.last_run_id = run.info.run_id
+            self.experiment_id = run.info.experiment_id
+
+            self.estimator.fit(X, y)
+
+        return self
+
+    @property
+    def param_grid(self) -> dict:
+        return {}

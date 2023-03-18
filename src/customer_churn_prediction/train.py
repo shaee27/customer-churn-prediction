@@ -78,7 +78,9 @@ TARGET_COL = "Churn"
     "--model",
     default="logreg",
     show_default=True,
-    type=click.Choice(["logreg", "rf", "knn", "catboost", "lgbm", "tabnet"]),
+    type=click.Choice(
+        ["logreg", "rf", "knn", "catboost", "lgbm", "tabnet", "stacking"]
+    ),
 )
 @click.option(
     "-r",
@@ -166,6 +168,11 @@ def train(
     elif model == "tabnet":
         click.echo(f"Training TabNet")
         classifier = mlflow_model.TabNetMLflow(
+            pipeline=pipeline, random_state=random_state
+        )
+    elif model == "stacking":
+        click.echo(f"Training Stacking")
+        classifier = mlflow_model.StackingMLflow(
             pipeline=pipeline, random_state=random_state
         )
 
