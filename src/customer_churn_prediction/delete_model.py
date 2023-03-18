@@ -4,11 +4,13 @@ from mlflow import MlflowClient
 
 @click.command()
 @click.option(
+    "-n",
     "--name",
     type=str,
     help="Model name in MLflow registry.",
 )
 @click.option(
+    "-v",
     "--version",
     type=int,
     default=None,
