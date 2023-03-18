@@ -50,7 +50,7 @@ TARGET_COL = "Churn"
 @click.option(
     "--test-split-ratio",
     default=0.2,
-    type=click.FloatRange(0, 1, min_open=True, max_open=True),
+    type=click.FloatRange(0, 1, max_open=True),
     help="The proportion of the dataset to include in the test split.",
 )
 @click.option(
@@ -90,9 +90,13 @@ def train(
     click.echo(f"Dataset shape: {dataset.shape}.")
     features = dataset.drop(TARGET_COL, axis=1)
     target = dataset[TARGET_COL]
-    features_train, features_val, target_train, target_val = train_test_split(
-        features, target, test_size=test_split_ratio, random_state=random_state
-    )
+    if test_split_ratio > 0: 
+        features_train, features_val, target_train, target_val = train_test_split(
+            features, target, test_size=test_split_ratio, random_state=random_state
+        )
+    else:
+        features_train = features
+        target_train = target
 
     pipeline = Pipeline([("feature_preprocessor", FeaturePreprocessor())])
     if scale or ohe:
@@ -147,5 +151,6 @@ def train(
         )
 
     classifier.train_with_logging(features_train, target_train)
-    roc_auc = classifier.evaluate(features_val, target_val)
-    click.echo(f"ROC AUC score: {roc_auc}.")
+    if test_split_ratio > 0:
+        roc_auc = classifier.evaluate(features_val, target_val)
+        click.echo(f"ROC AUC score: {roc_auc}.")
