@@ -78,6 +78,12 @@ TARGET_COL = "Churn"
     show_default=True,
     type=click.Choice(["logreg", "rf", "knn", "catboost", "lgbm", "tabnet"]),
 )
+@click.option(
+    "--run-name",
+    default=None,
+    type=str,
+    help="MLflow run name.",
+)
 def train(
     dataset_path: Path,
     random_state: int,
@@ -85,6 +91,7 @@ def train(
     scale: bool,
     ohe: bool,
     model: str,
+    run_name: str,
 ) -> None:
     dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
@@ -158,7 +165,7 @@ def train(
             pipeline=pipeline, random_state=random_state
         )
 
-    classifier.train_with_logging(features_train, target_train)
+    classifier.train_with_logging(features_train, target_train, run_name)
     if test_split_ratio > 0:
         roc_auc = classifier.evaluate(features_val, target_val)
         click.echo(f"ROC AUC score: {roc_auc}.")
