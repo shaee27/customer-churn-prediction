@@ -54,11 +54,16 @@ TARGET_COL = "Churn"
     help="The proportion of the dataset to include in the test split.",
 )
 @click.option(
-    "--scale/--no-scale",
-    default=True,
+    "--scale/",
+    default="num",
     show_default=True,
-    type=bool,
-    help="Use standard scaler.",
+    type=click.Choice(["num", "all", "none"]),
+    help=(
+        "Use standard scaler: "
+        "num - for numerical features, "
+        "all - for all features, "
+        "none - don't use scaler"
+    ),
 )
 @click.option(
     "--ohe/--no-ohe",
@@ -91,9 +96,17 @@ def train(
 
     pipeline = Pipeline([("feature_preprocessor", FeaturePreprocessor())])
     if scale or ohe:
+        if scale == "all" and ohe:
+            raise ValueError(
+                "Can't use one-hot encoding after scaling categorical features. "
+                "If you want to use OHE, please scale only for numerical"
+                "features (option `num`)or don't use at all (`none`)."
+            )
         ct = ColumnTransformer([])
-        if scale:
+        if scale == "num":
             ct.transformers.append(("num", StandardScaler(), NUM_COLS))
+        if scale == "all":
+            ct.transformers.append(("num", StandardScaler(), FEATURE_COLS))
         if ohe:
             if model == "catboost":
                 raise ValueError(
