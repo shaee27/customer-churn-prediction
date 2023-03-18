@@ -3258,6 +3258,25 @@ files = [
 ]
 
 [[package]]
+name = "pytorch-tabnet"
+version = "4.0"
+description = "PyTorch implementation of TabNet"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "pytorch_tabnet-4.0-py3-none-any.whl", hash = "sha256:0e9883b3b0866caca3dfec80d5c94139fb5906015a176c1c2c181e47531e7c72"},
+    {file = "pytorch_tabnet-4.0.tar.gz", hash = "sha256:f5600715777423f9c9ef0f3c98b97d4ff1c9521d7c38ca344469a878026dd876"},
+]
+
+[package.dependencies]
+numpy = ">=1.17,<2.0"
+scikit_learn = ">0.21"
+scipy = ">1.4"
+torch = ">=1.2,<2.0"
+tqdm = ">=4.36,<5.0"
+
+[[package]]
 name = "pytz"
 version = "2022.7.1"
 description = "World timezone definitions, modern and historical"
@@ -4592,4 +4611,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.10"
-content-hash = "026de1c0b4b65252f97aac98a2e73cb3428ef4a50e87289c553cf893b246532c"
+content-hash = "81b43b145e222a2285bd25365704ef2f6fd2571604d70cf6425956e8ec9afa97"

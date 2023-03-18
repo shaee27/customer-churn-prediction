@@ -71,7 +71,7 @@ TARGET_COL = "Churn"
     "--model",
     default="logreg",
     show_default=True,
-    type=click.Choice(["logreg", "rf", "knn", "catboost", "lgbm"]),
+    type=click.Choice(["logreg", "rf", "knn", "catboost", "lgbm", "tabnet"]),
 )
 def train(
     dataset_path: Path,
@@ -125,6 +125,11 @@ def train(
     elif model == "lgbm":
         click.echo(f"Training Light Gradient Boosted Machine")
         classifier = mlflow_model.LgbmMLflow(
+            pipeline=pipeline, random_state=random_state
+        )
+    elif model == "tabnet":
+        click.echo(f"Training TabNet")
+        classifier = mlflow_model.TabNetMLflow(
             pipeline=pipeline, random_state=random_state
         )
 

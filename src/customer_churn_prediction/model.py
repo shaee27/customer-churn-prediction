@@ -11,6 +11,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
+from pytorch_tabnet.tab_model import TabNetClassifier
 
 
 class MLflowModel(ABC):
@@ -248,5 +249,27 @@ class LgbmMLflow(MLflowModel):
             "max_depth": [4],
             "min_child_samples": range(200, 215),
             "reg_lambda": [0, 0.1, 0.2, 0.5, 0.7, 1, 1.2, 1.5, 2],
+        }
+        return {"model__" + key: val for key, val in params.items()}
+
+
+class TabNetMLflow(MLflowModel):
+    @property
+    def estimator(self):
+        return TabNetClassifier(
+            device_name="cpu",
+            verbose=0,
+            seed=self.random_state,
+        )
+
+    @property
+    def param_grid(self) -> dict:
+        params = {
+            "gamma": [0.9, 0.92, 0.95, 0.97, 0.98],
+            "lambda_sparse": [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01],
+            "momentum": np.arange(0.1, 1, 0.1),
+            "n_independent": [0, 1],
+            "n_shared": [7, 9],
+            "n_steps": [4, 5],
         }
         return {"model__" + key: val for key, val in params.items()}

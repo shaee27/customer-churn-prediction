@@ -24,6 +24,7 @@ torchvision = "<0.12"
 scikit-learn = ">=0.22.1,<=1.2.1"
 mlflow = "^2.2.1"
 lightgbm = ">=2.3,<=3.2.1"
+pytorch-tabnet = "^4.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -49,5 +50,6 @@ module = [
     "catboost",
     "mlflow",
     "lightgbm",
+    "pytorch_tabnet.*",
 ]
 ignore_missing_imports = true
