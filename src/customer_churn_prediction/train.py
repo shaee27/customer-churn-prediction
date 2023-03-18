@@ -54,7 +54,8 @@ TARGET_COL = "Churn"
     help="The proportion of the dataset to include in the test split.",
 )
 @click.option(
-    "--scale/",
+    "-s",
+    "--scale",
     default="num",
     show_default=True,
     type=click.Choice(["num", "all", "none"]),
@@ -73,12 +74,14 @@ TARGET_COL = "Churn"
     help="Use one-hot encoding.",
 )
 @click.option(
+    "-m",
     "--model",
     default="logreg",
     show_default=True,
     type=click.Choice(["logreg", "rf", "knn", "catboost", "lgbm", "tabnet"]),
 )
 @click.option(
+    "-r",
     "--run-name",
     default=None,
     type=str,
