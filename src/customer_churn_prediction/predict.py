@@ -28,8 +28,6 @@ import pandas as pd
 )
 def predict(
     dataset_path: Path,
-    scale: bool,
-    ohe: bool,
     model_name: str,
     model_version: str,
 ) -> None:
