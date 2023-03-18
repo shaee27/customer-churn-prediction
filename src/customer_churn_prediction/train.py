@@ -136,7 +136,8 @@ def train(
                     "both the training speed and the resulting quality."
                 )
             ct.transformers.append(("cat", OneHotEncoder(), CAT_COLS))
-        pipeline.steps.append(("num_cat_preprocessor", ct))
+        if ct.transformers:
+            pipeline.steps.append(("num_cat_preprocessor", ct))
 
     classifier: mlflow_model.MLflowModel
     if model == "logreg":
