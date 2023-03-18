@@ -7,8 +7,9 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.scripts]
-predict = "customer_churn_prediction.predict:predict"
 train = "customer_churn_prediction.train:train"
+predict = "customer_churn_prediction.predict:predict"
+delete-model = "customer_churn_prediction.delete_model:delete_model"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
