@@ -115,17 +115,31 @@ class MLflowModel(ABC):
                 n_splits=5, shuffle=True, random_state=self.random_state
             )
 
+            # inner loop
             grid_search = GridSearchCV(
                 estimator=self.pipeline,
                 param_grid=self.param_grid,
                 scoring="roc_auc",
-                n_jobs=-1,
                 cv=inner_cv,
             )
 
-            nested_score = cross_val_score(grid_search, X=X, y=y, cv=outer_cv)
-            click.echo(f"Nested CV score: {nested_score.mean():.5f}")
+            # outer loop
+            nested_score = cross_val_score(
+                grid_search,
+                X=X,
+                y=y,
+                scoring="roc_auc",
+                cv=outer_cv,
+                n_jobs=-1,
+            )
+            click.echo(
+                f"Nested CV score: {nested_score.mean():.5f} "
+                f"{nested_score.std():.5f}"
+            )
+            mlflow.log_metric("nested_cv_roc_auc", nested_score.mean())
+            mlflow.log_metric("nested_cv_std", nested_score.std())
 
+            # retrain model with the best params found during last outer loop
             self.best_estimator = grid_search.fit(X, y)
 
         return self
