@@ -1,0 +1,17 @@
+name: tests
+on: [push]
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+          architecture: 'x64'
+      - run: pip install poetry==1.3.1
+      - run: pip install nox==2022.11.21
+      - run: nox -rs tests
