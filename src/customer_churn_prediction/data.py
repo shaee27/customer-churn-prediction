@@ -31,7 +31,6 @@ CAT_COLS = [
     "PaymentMethod",
 ]
 
-FEATURE_COLS = NUM_COLS + CAT_COLS
 TARGET_COL = "Churn"
 
 
@@ -84,6 +83,6 @@ def get_dataset(
         X_train = features
         X_val = pd.DataFrame()
         y_train = target
-        y_val = pd.Series()
+        y_val = pd.Series(dtype="int64")
 
     return X_train, X_val, y_train, y_val

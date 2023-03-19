@@ -1,18 +1,10 @@
 import click
 from pathlib import Path
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from typing import Dict, Type
 
-from .data import (
-    FeaturePreprocessor,
-    get_dataset,
-    NUM_COLS,
-    FEATURE_COLS,
-    CAT_COLS,
-)
+from .data import get_dataset, CAT_COLS
 import customer_churn_prediction.model as mlflow_model
+from .pipeline import create_pipeline
 
 
 MODELS: Dict[str, Type[mlflow_model.MLflowModel]] = {
@@ -78,47 +70,33 @@ def train(
     dataset_path: Path,
     random_state: int,
     test_split_ratio: float,
-    scale: bool,
+    scale: str,
     ohe: bool,
     model: str,
     run_name: str,
 ) -> None:
+    if ohe and model == "catboost":
+        raise ValueError(
+            "Do not use one-hot encoding with CatBoost. This affects both the "
+            "training speed and the resulting quality."
+        )
+
     features_train, features_val, target_train, target_val = get_dataset(
         dataset_path,
         random_state,
         test_split_ratio,
     )
 
-    pipeline = Pipeline([("feature_preprocessor", FeaturePreprocessor())])
-    if scale or ohe:
-        if scale == "all" and ohe:
-            raise ValueError(
-                "Can't use one-hot encoding after scaling categorical features. "
-                "If you want to use OHE, please scale only for numerical"
-                "features (option `num`)or don't use at all (`none`)."
-            )
-        ct = ColumnTransformer([])
-        if scale == "num":
-            ct.transformers.append(("num", StandardScaler(), NUM_COLS))
-        if scale == "all":
-            ct.transformers.append(("num", StandardScaler(), FEATURE_COLS))
-        if ohe:
-            if model == "catboost":
-                raise ValueError(
-                    "Do not use one-hot encoding with CatBoost. This affects "
-                    "both the training speed and the resulting quality."
-                )
-            ct.transformers.append(("cat", OneHotEncoder(), CAT_COLS))
-        if ct.transformers:
-            pipeline.steps.append(("num_cat_preprocessor", ct))
-
     class_name = MODELS[model].__name__
     click.echo(f"Training {class_name}")
-    classifier = MODELS[model](
-        pipeline=pipeline, random_state=random_state, cat_features=CAT_COLS
-    )
 
+    classifier = MODELS[model](
+        pipeline=create_pipeline(scale, ohe),
+        random_state=random_state,
+        cat_features=CAT_COLS,
+    )
     classifier.train_with_logging(features_train, target_train, run_name)
+
     if test_split_ratio > 0:
         roc_auc = classifier.evaluate(features_val, target_val)
         click.echo(f"ROC AUC score: {roc_auc}.")
