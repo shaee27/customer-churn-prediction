@@ -5,6 +5,10 @@ from typing import Tuple
 
 from sklearn.base import BaseEstimator, TransformerMixin
 
+
+TRAIN_DATA_PATH = "data/train.csv"
+TEST_DATA_PATH = "data/test.csv"
+
 NUM_COLS = [
     "ClientPeriod",
     "MonthlySpending",

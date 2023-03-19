@@ -1,7 +1,10 @@
 from click.testing import CliRunner
+from pathlib import Path
 import pytest
+import os
 
 from customer_churn_prediction.train import train
+from customer_churn_prediction.data import TRAIN_DATA_PATH
 
 
 @pytest.fixture
@@ -9,12 +12,18 @@ def runner() -> CliRunner:
     """Fixture providing click runner."""
     return CliRunner()
 
-@pytest.mark.skip(reason="debug github actions")
+def generate_test_dataset(path: Path) -> None:
+    os.makedirs(path.parent)
+    open(path, 'a').close()
+
 def test_error_training_catboost_with_ohe(runner: CliRunner) -> None:
     """It fails when model is catboost and one-hot encoding is enabled."""
-    result = runner.invoke(train, ["--ohe", "--model", "catboost"])
-    assert result.exit_code == 1
-    assert "Do not use one-hot encoding with CatBoost" in str(result.exception)
+    with runner.isolated_filesystem():
+        generate_test_dataset(Path(TRAIN_DATA_PATH))
+        result = runner.invoke(train, ["--ohe", "--model", "catboost"])
+        assert result.exit_code == 1
+        msg = "Do not use one-hot encoding with CatBoost" 
+        assert msg in str(result.exception)
 
 def test_error_for_unknown_model(runner: CliRunner) -> None:
     """It fails when model name is unknown."""

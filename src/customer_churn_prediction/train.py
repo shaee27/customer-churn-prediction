@@ -2,7 +2,7 @@ import click
 from pathlib import Path
 from typing import Dict, Type
 
-from .data import get_dataset, CAT_COLS
+from .data import get_dataset, CAT_COLS, TRAIN_DATA_PATH
 import customer_churn_prediction.model as mlflow_model
 from .pipeline import create_pipeline
 
@@ -22,7 +22,7 @@ MODELS: Dict[str, Type[mlflow_model.MLflowModel]] = {
 @click.option(
     "-d",
     "--dataset-path",
-    default="data/train.csv",
+    default=TRAIN_DATA_PATH,
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
 )
 @click.option(
