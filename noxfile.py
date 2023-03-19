@@ -1,5 +1,6 @@
 """Nox sessions."""
 
+import os
 import tempfile
 from typing import Any
 
@@ -15,7 +16,7 @@ def install_with_constraints(
     session: Session, *args: str, **kwargs: Any
 ) -> None:
     """Install packages constrained by Poetry's lock file."""
-    with tempfile.NamedTemporaryFile() as requirements:
+    with tempfile.NamedTemporaryFile(delete=False) as requirements:
         session.run(
             "poetry",
             "export",
@@ -31,6 +32,8 @@ def install_with_constraints(
         session.install(
             "--requirement", f"{requirements.name}", *args, **kwargs
         )
+        requirements.close()
+        os.unlink(requirements.name)
 
 
 @nox.session(python="3.9")
