@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from catboost import CatBoostClassifier
+import click
 import git
 import numpy as np
 import lightgbm as lgb
@@ -8,7 +9,11 @@ from sklearn.ensemble import RandomForestClassifier, StackingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import (
+    cross_val_score,
+    GridSearchCV,
+    StratifiedKFold,
+)
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from pytorch_tabnet.tab_model import TabNetClassifier
@@ -98,17 +103,29 @@ class MLflowModel(ABC):
             run_name=run_name,
             tags={"mlflow.source.git.commit": version},
         ) as run:
+            # store run_id and experiment_id for future calls
             self.last_run_id = run.info.run_id
             self.experiment_id = run.info.experiment_id
+
+            # define the inner and outer cross-validation splits
+            inner_cv = StratifiedKFold(
+                n_splits=5, shuffle=True, random_state=self.random_state
+            )
+            outer_cv = StratifiedKFold(
+                n_splits=5, shuffle=True, random_state=self.random_state
+            )
 
             grid_search = GridSearchCV(
                 estimator=self.pipeline,
                 param_grid=self.param_grid,
                 scoring="roc_auc",
                 n_jobs=-1,
-                cv=10,
-                refit=True,
+                cv=inner_cv,
             )
+
+            nested_score = cross_val_score(grid_search, X=X, y=y, cv=outer_cv)
+            click.echo(f"Nested CV score: {nested_score.mean():.5f}")
+
             self.best_estimator = grid_search.fit(X, y)
 
         return self
@@ -117,6 +134,8 @@ class MLflowModel(ABC):
     @abstractmethod
     def param_grid(self) -> dict:
         """
+        Defines the parameter grid for hyperparameter tuning.
+
         Returns:
             dict: A dictionary of hyperparameters and their values
             for hyperparameter tuning.

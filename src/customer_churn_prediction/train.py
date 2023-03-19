@@ -25,13 +25,6 @@ MODELS: Dict[str, Type[mlflow_model.MLflowModel]] = {
     default="data/train.csv",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
 )
-@click.option("--random-state", default=42, type=int)
-@click.option(
-    "--test-split-ratio",
-    default=0.2,
-    type=click.FloatRange(0, 1, max_open=True),
-    help="The proportion of the dataset to include in the test split.",
-)
 @click.option(
     "-s",
     "--scale",
@@ -66,10 +59,15 @@ MODELS: Dict[str, Type[mlflow_model.MLflowModel]] = {
     type=str,
     help="MLflow run name.",
 )
+@click.option(
+    "--random-state",
+    default=0,
+    show_default=True,
+    type=click.IntRange(0, 2**32 - 1),
+)
 def train(
     dataset_path: Path,
     random_state: int,
-    test_split_ratio: float,
     scale: str,
     ohe: bool,
     model: str,
@@ -81,11 +79,7 @@ def train(
             "training speed and the resulting quality."
         )
 
-    features_train, features_val, target_train, target_val = get_dataset(
-        dataset_path,
-        random_state,
-        test_split_ratio,
-    )
+    features, target = get_dataset(dataset_path, random_state)
 
     class_name = MODELS[model].__name__
     click.echo(f"Training {class_name}")
@@ -95,8 +89,4 @@ def train(
         random_state=random_state,
         cat_features=CAT_COLS,
     )
-    classifier.train_with_logging(features_train, target_train, run_name)
-
-    if test_split_ratio > 0:
-        roc_auc = classifier.evaluate(features_val, target_val)
-        click.echo(f"ROC AUC score: {roc_auc}.")
+    classifier.train_with_logging(features, target, run_name)
