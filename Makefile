@@ -18,6 +18,10 @@ black:
 mypy:
 	poetry run nox -rs mypy
 
+coverage-html: tests
+	poetry run coverage html
+	@xdg-open htmlcov/index.html
+
 tags:
 	ctags -f tags -R --fields=+iaS --extra=+q $(SOURCES)
 
