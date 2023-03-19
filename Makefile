@@ -6,7 +6,8 @@ train:
 run-mlflow-server:
 	poetry run mlflow server --host 0.0.0.0 --port 5000
 
-all-tests: black mypy tests
+all-tests:
+	poetry run nox -r
 
 tests:
 	poetry run nox -rs tests
