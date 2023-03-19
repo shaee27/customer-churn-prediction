@@ -1,13 +1,17 @@
 import click
-import pandas as pd
 from pathlib import Path
 from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from typing import Dict, Type
 
-from .data import FeaturePreprocessor
+from .data import (
+    FeaturePreprocessor,
+    get_dataset,
+    NUM_COLS,
+    FEATURE_COLS,
+    CAT_COLS,
+)
 import customer_churn_prediction.model as mlflow_model
 
 
@@ -20,34 +24,6 @@ MODELS: Dict[str, Type[mlflow_model.MLflowModel]] = {
     "tabnet": mlflow_model.TabNetMLflow,
     "stacking": mlflow_model.StackingMLflow,
 }
-
-NUM_COLS = [
-    "ClientPeriod",
-    "MonthlySpending",
-    "TotalSpent",
-]
-
-CAT_COLS = [
-    "Sex",
-    "IsSeniorCitizen",
-    "HasPartner",
-    "HasChild",
-    "HasPhoneService",
-    "HasMultiplePhoneNumbers",
-    "HasInternetService",
-    "HasOnlineSecurityService",
-    "HasOnlineBackup",
-    "HasDeviceProtection",
-    "HasTechSupportAccess",
-    "HasOnlineTV",
-    "HasMovieSubscription",
-    "HasContractPhone",
-    "IsBillingPaperless",
-    "PaymentMethod",
-]
-
-FEATURE_COLS = NUM_COLS + CAT_COLS
-TARGET_COL = "Churn"
 
 
 @click.command()
@@ -107,25 +83,11 @@ def train(
     model: str,
     run_name: str,
 ) -> None:
-    dataset = pd.read_csv(dataset_path)
-    click.echo(f"Dataset shape: {dataset.shape}.")
-    features = dataset.drop(TARGET_COL, axis=1)
-    target = dataset[TARGET_COL]
-    if test_split_ratio > 0:
-        (
-            features_train,
-            features_val,
-            target_train,
-            target_val,
-        ) = train_test_split(
-            features,
-            target,
-            test_size=test_split_ratio,
-            random_state=random_state,
-        )
-    else:
-        features_train = features
-        target_train = target
+    features_train, features_val, target_train, target_val = get_dataset(
+        dataset_path,
+        random_state,
+        test_split_ratio,
+    )
 
     pipeline = Pipeline([("feature_preprocessor", FeaturePreprocessor())])
     if scale or ohe:
