@@ -178,7 +178,7 @@ class MLflowModel(ABC):
         with mlflow.start_run(
             experiment_id=self.experiment_id,
             run_id=self.last_run_id,
-        ) as run:
+        ):
             roc_auc = roc_auc_score(y_val, self.best_estimator.predict(X_val))
             mlflow.log_metric("roc_auc", roc_auc)
             return roc_auc
@@ -226,8 +226,14 @@ class KnnMLflow(MLflowModel):
         params = {
             "n_neighbors": [44],  # range(1, 100),
             "metric": [
-                "manhattan"
-            ],  # ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan", "nan_euclidean"],
+                "cityblock",
+                "cosine",
+                "euclidean",
+                "l1",
+                "l2",
+                "manhattan",
+                "nan_euclidean",
+            ],
         }
         return {"model__" + key: val for key, val in params.items()}
 
@@ -248,16 +254,40 @@ class CatBoostMLflow(MLflowModel):
     def param_grid(self) -> dict:
         params = {
             "n_estimators": [
-                250
-            ],  # [5, 10, 20, 30, 40, 50, 70, 100, 150, 200, 250, 300, 500, 1000],
+                5,
+                10,
+                20,
+                30,
+                40,
+                50,
+                70,
+                100,
+                150,
+                200,
+                250,
+                300,
+                500,
+                1000,
+            ],
             "learning_rate": [
-                0.05
-            ],  # [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.02, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5],
-            "max_depth": [4],  # np.arange(4, 20, 1),
-            "l2_leaf_reg": [10],  # np.arange(0.1, 1, 0.05),
-            "subsample": [0.6],  # [3, 5, 7, 10],
-            "random_strength": [5],  # [1, 2, 5, 10, 20, 50, 100],
-            "min_data_in_leaf": [100],  # np.arange(10, 1001, 10),
+                0.0001,
+                0.0005,
+                0.001,
+                0.005,
+                0.01,
+                0.02,
+                0.04,
+                0.05,
+                0.1,
+                0.2,
+                0.3,
+                0.5,
+            ],
+            "max_depth": np.arange(4, 20, 1),
+            "l2_leaf_reg": np.arange(0.1, 1, 0.05),
+            "subsample": [3, 5, 7, 10],
+            "random_strength": [1, 2, 5, 10, 20, 50, 100],
+            "min_data_in_leaf": np.arange(10, 1001, 10),
         }
         return {"model__" + key: val for key, val in params.items()}
 
