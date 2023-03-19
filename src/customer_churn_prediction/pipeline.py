@@ -21,6 +21,6 @@ def create_pipeline(scale: str, ohe: bool) -> Pipeline:
     if ohe:
         transformers.append(("ohe", OneHotEncoder(), CAT_COLS))
     if transformers:
-        steps.append(("scale & ohe", ColumnTransformer(transformers)))
+        steps.append(("scale_ohe", ColumnTransformer(transformers)))
 
     return Pipeline(steps)
