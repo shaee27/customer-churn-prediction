@@ -1,14 +1,25 @@
-from pathlib import Path
-
 import click
 import pandas as pd
+from pathlib import Path
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from typing import Dict, Type
 
 from .data import FeaturePreprocessor
 import customer_churn_prediction.model as mlflow_model
+
+
+MODELS: Dict[str, Type[mlflow_model.MLflowModel]] = {
+    "logreg": mlflow_model.LogisticRegressionMLflow,
+    "rf": mlflow_model.RandomForestMLflow,
+    "knn": mlflow_model.KnnMLflow,
+    "catboost": mlflow_model.CatBoostMLflow,
+    "lgbm": mlflow_model.LgbmMLflow,
+    "tabnet": mlflow_model.TabNetMLflow,
+    "stacking": mlflow_model.StackingMLflow,
+}
 
 NUM_COLS = [
     "ClientPeriod",
@@ -78,9 +89,7 @@ TARGET_COL = "Churn"
     "--model",
     default="logreg",
     show_default=True,
-    type=click.Choice(
-        ["logreg", "rf", "knn", "catboost", "lgbm", "tabnet", "stacking"]
-    ),
+    type=click.Choice(list(MODELS.keys())),
 )
 @click.option(
     "-r",
@@ -141,40 +150,11 @@ def train(
         if ct.transformers:
             pipeline.steps.append(("num_cat_preprocessor", ct))
 
-    classifier: mlflow_model.MLflowModel
-    if model == "logreg":
-        click.echo(f"Training LogisticRegression")
-        classifier = mlflow_model.LogisticRegressionMLflow(
-            pipeline=pipeline, random_state=random_state
-        )
-    elif model == "rf":
-        click.echo(f"Training RandomForest")
-        classifier = mlflow_model.RandomForestMLflow(
-            pipeline=pipeline, random_state=random_state
-        )
-    elif model == "knn":
-        click.echo(f"Training KNearestNeighbour")
-        classifier = mlflow_model.KnnMLflow(pipeline=pipeline)
-    elif model == "catboost":
-        click.echo(f"Training CatBoost")
-        classifier = mlflow_model.CatBoostMLflow(
-            pipeline=pipeline, random_state=random_state, cat_features=CAT_COLS
-        )
-    elif model == "lgbm":
-        click.echo(f"Training Light Gradient Boosted Machine")
-        classifier = mlflow_model.LgbmMLflow(
-            pipeline=pipeline, random_state=random_state
-        )
-    elif model == "tabnet":
-        click.echo(f"Training TabNet")
-        classifier = mlflow_model.TabNetMLflow(
-            pipeline=pipeline, random_state=random_state
-        )
-    elif model == "stacking":
-        click.echo(f"Training Stacking")
-        classifier = mlflow_model.StackingMLflow(
-            pipeline=pipeline, random_state=random_state
-        )
+    class_name = MODELS[model].__name__
+    click.echo(f"Training {class_name}")
+    classifier = MODELS[model](
+        pipeline=pipeline, random_state=random_state, cat_features=CAT_COLS
+    )
 
     classifier.train_with_logging(features_train, target_train, run_name)
     if test_split_ratio > 0:
