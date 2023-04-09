@@ -75,6 +75,8 @@ def tests(session: Session) -> None:
     session.run("poetry", "install", "--only", "main", external=True)
     install_with_constraints(session, "pytest")
     try:
-        session.run("coverage", "run", "-m", "pytest", *args)
+        session.run(
+            "coverage", "run", "--source", "src", "-m", "pytest", *args
+        )
     finally:
         session.run("coverage", "report")
