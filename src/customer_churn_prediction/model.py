@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from catboost import CatBoostClassifier
 import click
 import git
@@ -17,6 +18,53 @@ from sklearn.model_selection import (
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from pytorch_tabnet.tab_model import TabNetClassifier
+
+
+class MLflowLogging:
+    def __init__(
+        self,
+        mlflow_tracking_uri="http://0.0.0.0:5000/",
+        mlflow_experiment_name=None,
+        logging_enabled=True,
+    ) -> None:
+        self.mlflow_tracking_uri = mlflow_tracking_uri
+        self.mlflow_experiment_name = mlflow_experiment_name
+        self.logging_enabled = logging_enabled
+
+        self.last_run_id = None
+        self.experiment_id = None
+
+        if self.logging_enabled:
+            mlflow.set_tracking_uri(self.mlflow_tracking_uri)
+
+    def autolog(self):
+        if self.logging_enabled:
+            mlflow.sklearn.autolog()
+
+    @contextmanager
+    def start_run(self, run_name=None):
+        if self.logging_enabled:
+            repo = git.Repo(search_parent_directories=True)
+            version = repo.head.object.hexsha
+
+            mlflow.start_run(
+                experiment_id=self.experiment_id,
+                run_id=self.last_run_id,
+                run_name=run_name,
+                tags={"mlflow.source.git.commit": version},
+            )
+            run = mlflow.active_run()
+            # store run_id and experiment_id for future calls
+            self.last_run_id = run.info.run_id
+            self.experiment_id = run.info.experiment_id
+            try:
+                yield run
+            finally:
+                mlflow.end_run()
+
+    def log_metric(self, name, value):
+        if self.logging_enabled:
+            mlflow.log_metric(name, value)
 
 
 class MLflowModel(ABC):
@@ -57,17 +105,16 @@ class MLflowModel(ABC):
         cat_features=None,
         random_state=0,
     ) -> None:
-        mlflow.set_tracking_uri(mlflow_tracking_uri)
+        self.mlflow_log = MLflowLogging(
+            mlflow_tracking_uri,
+            mlflow_experiment_name,
+        )
         self.cat_features = cat_features
         self.random_state = random_state
-        self.mlflow_experiment_name = mlflow_experiment_name
         self.pipeline = pipeline if pipeline else Pipeline([])
         self.pipeline.steps.append(("model", self.estimator))
 
-        self.name = None
         self.best_estimator = None
-        self.last_run_id = None
-        self.experiment_id = None
 
     @property
     @abstractmethod
@@ -92,21 +139,9 @@ class MLflowModel(ABC):
             run_name: str
                Name of MLflow run
         """
-        mlflow.sklearn.autolog()
+        self.mlflow_log.autolog()
 
-        repo = git.Repo(search_parent_directories=True)
-        version = repo.head.object.hexsha
-
-        with mlflow.start_run(
-            experiment_id=self.experiment_id,
-            run_id=self.last_run_id,
-            run_name=run_name,
-            tags={"mlflow.source.git.commit": version},
-        ) as run:
-            # store run_id and experiment_id for future calls
-            self.last_run_id = run.info.run_id
-            self.experiment_id = run.info.experiment_id
-
+        with self.mlflow_log.start_run(run_name) as run:
             # define the inner and outer cross-validation splits
             inner_cv = StratifiedKFold(
                 n_splits=5, shuffle=True, random_state=self.random_state
@@ -136,8 +171,10 @@ class MLflowModel(ABC):
                 f"Nested CV score: {nested_score.mean():.5f} "
                 f"{nested_score.std():.5f}"
             )
-            mlflow.log_metric("nested_cv_roc_auc", nested_score.mean())
-            mlflow.log_metric("nested_cv_std", nested_score.std())
+            self.mlflow_log.log_metric(
+                "nested_cv_roc_auc", nested_score.mean()
+            )
+            self.mlflow_log.log_metric("nested_cv_std", nested_score.std())
 
             # retrain model with the best params found during last outer loop
             self.best_estimator = grid_search.fit(X, y)
@@ -175,12 +212,9 @@ class MLflowModel(ABC):
                 "This model instance is not fitted yet. Call train with "
                 "appropriate arguments before using this estimator."
             )
-        with mlflow.start_run(
-            experiment_id=self.experiment_id,
-            run_id=self.last_run_id,
-        ):
+        with self.mlflow_log.start_run() as run:
             roc_auc = roc_auc_score(y_val, self.best_estimator.predict(X_val))
-            mlflow.log_metric("roc_auc", roc_auc)
+            self.mlflow_log.log_metric("roc_auc", roc_auc)
             return roc_auc
 
 
@@ -377,20 +411,9 @@ class StackingMLflow(MLflowModel):
         )
 
     def train_with_logging(self, X, y, run_name=None) -> "MLflowModel":
-        mlflow.sklearn.autolog()
+        self.mlflow_log.autolog()
 
-        repo = git.Repo(search_parent_directories=True)
-        version = repo.head.object.hexsha
-
-        with mlflow.start_run(
-            experiment_id=self.experiment_id,
-            run_id=self.last_run_id,
-            run_name=run_name,
-            tags={"mlflow.source.git.commit": version},
-        ) as run:
-            self.last_run_id = run.info.run_id
-            self.experiment_id = run.info.experiment_id
-
+        with self.mlflow_log.start_run(run_name) as run:
             self.estimator.fit(X, y)
 
         return self
