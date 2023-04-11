@@ -8,7 +8,7 @@ import nox
 from nox.sessions import Session
 
 
-nox.options.sessions = "black", "mypy", "tests"
+nox.options.sessions = "black", "flake8", "mypy", "tests"
 locations = "src", "noxfile.py"
 
 
