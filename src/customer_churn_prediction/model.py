@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+from copy import deepcopy
 from catboost import CatBoostClassifier
 import click
 import git
@@ -389,24 +390,26 @@ class StackingMLflow(MLflowModel):
         eval_metric="AUC:hints=skip_train~false",
         metric_period=1000,
         random_seed=0,
-        grow_policy="Depthwise",
-        l2_leaf_reg=1,
-        learning_rate=0.08,
-        max_depth=10,
-        min_data_in_leaf=10,
-        n_estimators=10,
-        random_strength=11,
-        subsample=0.1,
     )
 
     @property
     def estimator(self):
+        # inner loop
+        inner_cv = StratifiedKFold(
+            n_splits=5, shuffle=True, random_state=self.random_state
+        )
+        grid_search = GridSearchCV(
+            estimator=self.META_MODEL,
+            param_grid=self.param_grid,
+            scoring="roc_auc",
+            cv=inner_cv,
+        )
         return StackingClassifier(
             estimators=[
                 (estim, mlflow.sklearn.load_model(f"models:/{estim}/Staging"))
                 for estim in self.ESTIMATORS
             ],
-            final_estimator=self.META_MODEL,
+            final_estimator=grid_search,
             n_jobs=-1,
         )
 
@@ -414,10 +417,48 @@ class StackingMLflow(MLflowModel):
         self.mlflow_log.autolog()
 
         with self.mlflow_log.start_run(run_name):
-            self.estimator.fit(X, y)
+            # outer loop
+            outer_cv = StratifiedKFold(
+                n_splits=5, shuffle=True, random_state=self.random_state
+            )
+            model = self.estimator.fit(X, y)
+
+            nested_score = cross_val_score(
+                model,
+                X=X,
+                y=y,
+                scoring="roc_auc",
+                cv=outer_cv,
+                n_jobs=-1,
+            )
+
+            click.echo(
+                f"Nested CV score: {nested_score.mean():.5f} "
+                f"{nested_score.std():.5f}"
+            )
+            self.mlflow_log.log_metric(
+                "nested_cv_roc_auc", nested_score.mean()
+            )
+            self.mlflow_log.log_metric("nested_cv_std", nested_score.std())
+
+            # retrain model with the best params found during last outer loop
+            self.best_estimator = deepcopy(model)
+            self.best_estimator.final_estimator_ = deepcopy(  # type: ignore
+                model.final_estimator_.best_estimator_
+            )
 
         return self
 
     @property
     def param_grid(self) -> dict:
-        return {}
+        params = {
+            "n_estimators": [10, 20],
+            "max_depth": [5, 7, 10],
+            "subsample": [0.1, 0.4, 0.5, 0.65],
+            "l2_leaf_reg": [0, 1, 3, 4],
+            "random_strength": [4, 9, 10, 11, 12, 13],
+            "learning_rate": [0.04, 0.05, 0.06, 0.08, 0.1],
+            "min_data_in_leaf": [10, 100],
+            "grow_policy": ["SymmetricTree", "Depthwise", "Lossguide"],
+        }
+        return params
