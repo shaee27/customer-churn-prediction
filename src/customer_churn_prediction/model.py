@@ -141,7 +141,7 @@ class MLflowModel(ABC):
         """
         self.mlflow_log.autolog()
 
-        with self.mlflow_log.start_run(run_name) as run:
+        with self.mlflow_log.start_run(run_name):
             # define the inner and outer cross-validation splits
             inner_cv = StratifiedKFold(
                 n_splits=5, shuffle=True, random_state=self.random_state
@@ -212,7 +212,7 @@ class MLflowModel(ABC):
                 "This model instance is not fitted yet. Call train with "
                 "appropriate arguments before using this estimator."
             )
-        with self.mlflow_log.start_run() as run:
+        with self.mlflow_log.start_run():
             roc_auc = roc_auc_score(y_val, self.best_estimator.predict(X_val))
             self.mlflow_log.log_metric("roc_auc", roc_auc)
             return roc_auc
@@ -413,7 +413,7 @@ class StackingMLflow(MLflowModel):
     def train_with_logging(self, X, y, run_name=None) -> "MLflowModel":
         self.mlflow_log.autolog()
 
-        with self.mlflow_log.start_run(run_name) as run:
+        with self.mlflow_log.start_run(run_name):
             self.estimator.fit(X, y)
 
         return self
