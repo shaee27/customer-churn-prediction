@@ -67,6 +67,10 @@ class MLflowLogging:
         if self.logging_enabled:
             mlflow.log_metric(name, value)
 
+    def log_model(self, model, artifact_path):
+        if self.logging_enabled:
+            mlflow.sklearn.log_model(model, artifact_path)
+
 
 class MLflowModel(ABC):
     """
@@ -259,7 +263,7 @@ class KnnMLflow(MLflowModel):
     @property
     def param_grid(self) -> dict:
         params = {
-            "n_neighbors": [44],  # range(1, 100),
+            "n_neighbors": range(1, 100, 10),
             "metric": [
                 "cityblock",
                 "cosine",
@@ -446,6 +450,7 @@ class StackingMLflow(MLflowModel):
             self.best_estimator.final_estimator_ = deepcopy(  # type: ignore
                 model.final_estimator_.best_estimator_
             )
+            self.mlflow_log.log_model(self.best_estimator, "stacking")
 
         return self
 
