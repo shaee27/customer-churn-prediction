@@ -1,4 +1,4 @@
-# customer-churn-prediction
+# Customer Churn Prediction
 
 This repository contains code and resources for a machine learning competition on predicting customer churn. The competition is [hosted on Kaggle](https://www.kaggle.com/competitions/advanced-dls-spring-2021/) and the dataset includes information about customers of a telecommunications company, such as their usage patterns, account information, and demographic data.
 
@@ -34,6 +34,8 @@ make run-mlflow-server
 ```
 Then, in your browser, navigate to http://localhost:5000 to see the experiments results.
 
+![MLFlow tracking example](img/mlflow-tracking.png)
+
 ## Development
 
 To install all dependencies, including those required for development, into the Poetry environment, run the following command:
@@ -59,4 +61,15 @@ To format your code using [black](https://github.com/psf/black), you can use eit
 ```sh
 nox -[r]s black
 poetry run black src tests noxfile.py
+```
+
+To see coverage report use
+```sh
+poetry run coverage report
+```
+<img src="img/coverage-report.png" alt="coverage report" width="50%" height="auto">
+
+There is also a shortcut in Makefile to see report in html format
+```sh
+make coverage-html
 ```
