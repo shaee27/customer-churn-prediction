@@ -1,12 +1,26 @@
+<a href="https://github.com/wervlad/customer-churn-prediction/blob/main/LICENSE">
+    <img alt="license" src="https://img.shields.io/github/license/wervlad/customer-churn-prediction.svg?color=blue">
+</a>
+<a href="https://github.com/psf/black">
+    <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
+</a>
+<a href="https://github.com/wervlad/customer-churn-prediction/actions/workflows/linters.yml">
+    <img alt="linters" src="https://github.com/wervlad/customer-churn-prediction/actions/workflows/linters.yml/badge.svg">
+</a>
+<a href="https://github.com/wervlad/customer-churn-prediction/actions/workflows/tests.yml">
+    <img alt="tests" src="https://github.com/wervlad/customer-churn-prediction/actions/workflows/tests.yml/badge.svg">
+</a>
+
 # Customer Churn Prediction
 
 This repository contains code and resources for a machine learning competition on predicting customer churn. The competition is [hosted on Kaggle](https://www.kaggle.com/competitions/advanced-dls-spring-2021/) and the dataset includes information about customers of a telecommunications company, such as their usage patterns, account information, and demographic data.
 
-The goal of this project is to develop a predictive model that can accurately identify which customers are at risk of churning, i.e. cancelling their service. The repository includes exploratory data analysis, feature engineering, model selection and hyperparameter tuning, and evaluation of the model's performance on a held-out test set.
-
-The code is written in Python and uses popular machine learning libraries such as scikit-learn and pandas. The repository also includes documentation on the approach taken to solve the problem, as well as any insights gained during the analysis.
+The goal of this project is to develop a predictive model that can accurately identify which customers are at risk of churning, i.e. cancelling their service. The repository includes [exploratory data analysis](/docs/eda.ipynb), feature engineering, model selection and hyperparameter tuning, and evaluation of the model's performance on a held-out test set.
 
 If you're interested in participating in the competition or just want to learn more about machine learning for customer churn prediction, feel free to explore the code and resources in this repository.
+
+## Final report
+Is published as Kaggle notebook: [Basic Feature Preprocessing + Stacking](https://www.kaggle.com/code/wervlad/basic-feature-preprocessing-stacking)
 
 ## Usage
 
@@ -17,9 +31,19 @@ If you're interested in participating in the competition or just want to learn m
 ```sh
 poetry install --no-dev
 ```
-5. To run the train script, execute the following command:
+5. To run the train script, first start mlflow server
 ```sh
-poetry run train -d <path to csv with data>
+poetry run mlflow server --host 0.0.0.0 --port 5000
+```
+or
+```sh
+make run-mlflow-server
+```
+if you have make installed.
+
+Then execute the following command:
+```sh
+poetry run train -d <path to csv with data> -m <model>
 ```
 Additional options can be configured via the command-line interface (CLI). To view a complete list of available options, use the help command:
 ```sh
