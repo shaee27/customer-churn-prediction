@@ -10,6 +10,9 @@
 <a href="https://github.com/wervlad/customer-churn-prediction/actions/workflows/tests.yml">
     <img alt="tests" src="https://github.com/wervlad/customer-churn-prediction/actions/workflows/tests.yml/badge.svg">
 </a>
+<a href="https://share.streamlit.io/wervlad/customer-churn-prediction/main/src/customer_churn_prediction/streamlit.py">
+    <img alt="Open in Streamlit" src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg">
+</a>
 
 # Customer Churn Prediction
 
