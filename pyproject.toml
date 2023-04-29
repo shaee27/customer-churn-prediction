@@ -12,7 +12,7 @@ predict = "customer_churn_prediction.predict:predict"
 delete-model = "customer_churn_prediction.delete_model:delete_model"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.9.7"
+python = ">=3.8,<3.9.7 || >3.9.7,<3.10"
 lightautoml = "^0.3.7.3"
 catboost = "^1.0.6"
 tqdm = "^4.64.1"
