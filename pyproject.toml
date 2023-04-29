@@ -12,7 +12,7 @@ predict = "customer_churn_prediction.predict:predict"
 delete-model = "customer_churn_prediction.delete_model:delete_model"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.10"
+python = ">=3.8,<3.9.7"
 lightautoml = "^0.3.7.3"
 catboost = "^1.0.6"
 tqdm = "^4.64.1"
@@ -27,6 +27,7 @@ scikit-learn = ">=0.22.1,<=1.0.2"
 mlflow = "^2.2.1"
 lightgbm = ">=2.3,<=3.2.1"
 pytorch-tabnet = "^4.0"
+streamlit = "^1.22.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -49,6 +50,7 @@ filterwarnings = [
 [[tool.mypy.overrides]]
 module = [
     "catboost",
+    "joblib",
     "lightgbm",
     "mlflow.*",
     "pandas",
