@@ -4,9 +4,6 @@
 <a href="https://github.com/psf/black">
     <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
 </a>
-<a href="https://github.com/wervlad/customer-churn-prediction/actions/workflows/linters.yml">
-    <img alt="linters" src="https://github.com/wervlad/customer-churn-prediction/actions/workflows/linters.yml/badge.svg">
-</a>
 <a href="https://github.com/wervlad/customer-churn-prediction/actions/workflows/tests.yml">
     <img alt="tests" src="https://github.com/wervlad/customer-churn-prediction/actions/workflows/tests.yml/badge.svg">
 </a>
@@ -23,7 +20,10 @@ The goal of this project is to develop a predictive model that can accurately id
 If you're interested in participating in the competition or just want to learn more about machine learning for customer churn prediction, feel free to explore the code and resources in this repository.
 
 ## Final report
-Is published as Kaggle notebook: [Basic Feature Preprocessing + Stacking](https://www.kaggle.com/code/wervlad/basic-feature-preprocessing-stacking)
+Is published as Kaggle notebook: [Basic Feature Preprocessing + Stacking](https://www.kaggle.com/code/wervlad/basic-feature-preprocessing-stacking).
+
+## Live demo
+Is available [on Streamlit](https://share.streamlit.io/wervlad/customer-churn-prediction/main/src/customer_churn_prediction/streamlit.py).
 
 ## Usage
 
